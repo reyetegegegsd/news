@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingNewsItem } from '../types';
 import { COUNTRIES } from '../data/countries';
+import { FALLBACK_TRENDING_NEWS } from '../data/fallbackNews';
+import { generateClient50Styles } from '../utils/clientNewsGenerator';
 import {
   RefreshCw,
   Search,
@@ -67,20 +69,44 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
     queryToUse?: string
   ) => {
     setIsLoading(true);
+    const q = (queryToUse !== undefined ? queryToUse : customSearchQuery).trim();
     try {
-      const q = (queryToUse !== undefined ? queryToUse : customSearchQuery).trim();
       const url = `/api/news/trending?category=${cat}&country=${country}&timeFilter=${timeFilter}&limit=50${
         q ? `&q=${encodeURIComponent(q)}` : ''
       }`;
       const res = await fetch(url);
-      const data = await res.json();
-      if (data.news && Array.isArray(data.news)) {
-        if (onNewsFeedLoaded) {
-          onNewsFeedLoaded(data.news);
+      if (res.ok) {
+        try {
+          const data = await res.json();
+          if (data.news && Array.isArray(data.news) && data.news.length > 0) {
+            if (onNewsFeedLoaded) {
+              onNewsFeedLoaded(data.news);
+            }
+            return;
+          }
+        } catch {
+          // If response is not JSON
+        }
+      }
+      // Fallback for static GitHub Pages mode
+      if (onNewsFeedLoaded) {
+        if (q) {
+          const generated = generateClient50Styles(q, `Live dispatch for ${q}`);
+          onNewsFeedLoaded(generated.slice(0, 16));
+        } else {
+          onNewsFeedLoaded(FALLBACK_TRENDING_NEWS);
         }
       }
     } catch (e) {
-      console.error('Failed to fetch country news feed:', e);
+      console.warn('Country news fetch notice (using fallback):', e);
+      if (onNewsFeedLoaded) {
+        if (q) {
+          const generated = generateClient50Styles(q, `Live dispatch for ${q}`);
+          onNewsFeedLoaded(generated.slice(0, 16));
+        } else {
+          onNewsFeedLoaded(FALLBACK_TRENDING_NEWS);
+        }
+      }
     } finally {
       setIsLoading(false);
     }

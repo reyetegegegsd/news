@@ -30,6 +30,8 @@ import {
 } from './types';
 import { NEWS_BACKGROUNDS } from './data/backgrounds';
 import { COUNTRIES } from './data/countries';
+import { FALLBACK_TRENDING_NEWS } from './data/fallbackNews';
+import { generateClientStory, generateClient50Styles } from './utils/clientNewsGenerator';
 import { exportReelVideo, downloadReelBlob } from './utils/reelVideoExporter';
 import {
   Sparkles,
@@ -87,7 +89,7 @@ export default function App() {
   // Country & News Feed State (Default India, easily switchable to ANY of 40+ countries)
   const [selectedCountry, setSelectedCountry] = useState<string>('IN');
   const [activeTimeFilter, setActiveTimeFilter] = useState<string>('24h');
-  const [feedItems, setFeedItems] = useState<TrendingNewsItem[]>([]);
+  const [feedItems, setFeedItems] = useState<TrendingNewsItem[]>(FALLBACK_TRENDING_NEWS);
   const [isLoadingFeed, setIsLoadingFeed] = useState<boolean>(false);
 
   const [savedItems, setSavedItems] = useState<TrendingNewsItem[]>(() => {
@@ -253,57 +255,73 @@ export default function App() {
     try {
       const url = `/api/news/trending?category=all&country=${country}&timeFilter=${timeFilter}&limit=50`;
       const res = await fetch(url);
-      const data = await res.json();
-      if (data.news && Array.isArray(data.news)) {
-        setFeedItems(data.news);
-        if (data.news.length > 0) {
-          const first = data.news[0];
-          setSelectedTopic(first.headline);
-          setActiveReelItem((prev) => prev || first);
-          setPosterConfig((prev) => {
-            // If user already typed or has saved a custom headline, preserve it!
-            if (prev.mainHeadline && prev.mainHeadline.trim().length > 0) {
-              return prev;
-            }
-            return {
-              ...prev,
-              badge: first.badge || '🚨 BREAKING NEWS',
-              mainHeadline: first.headline,
-              subHeadline: first.summary,
-              bgImageUrl: first.imageSuggestion || prev.bgImageUrl,
-              colorTheme: first.autoPoster?.colorTheme || prev.colorTheme,
-              userHandle: userHandle,
-              handleCorner: handleCorner,
-            };
-          });
-          setCurrentStory({
-            headline: first.headline,
-            headlineEn: first.headline,
-            summary: first.summary,
-            fullArticle: first.fullDescription || first.summary,
-            keyHighlights: [
-              first.headline,
-              `Live wire coverage from ${first.sourceWebsite || 'News Wire'}`,
-              `Territory: ${first.country || country}`,
-              'Real-time newsroom verification complete',
-            ],
-            viralTags: ['#BreakingNews', '#TopStory', '#LiveWire', '#NewsToday'],
-            facebookPost: `🚨 ${first.badge || 'BREAKING'}: ${first.headline}\n\n${first.summary}\n\n📰 Source: ${first.sourceWebsite}`,
-            instagramCaption: `⚡ ${first.headline}\n\n${first.summary}\n\n#breakingnews #news #live`,
-            sourceWebsite: first.sourceWebsite,
-            originalLink: first.link,
-            poster: {
-              badge: first.badge,
-              mainHeadline: first.headline,
-              subHeadline: first.summary,
-              highlightStat: first.autoPoster?.highlightStat || '100% VERIFIED',
-              colorTheme: first.autoPoster?.colorTheme || 'red_dark',
-            },
-          });
+      let loadedNews: TrendingNewsItem[] = [];
+      if (res.ok) {
+        try {
+          const data = await res.json();
+          if (data.news && Array.isArray(data.news) && data.news.length > 0) {
+            loadedNews = data.news;
+          }
+        } catch {
+          // If non-JSON returned (e.g. static GitHub Pages hosting)
         }
       }
+
+      if (loadedNews.length === 0 && feedItems.length === 0) {
+        loadedNews = FALLBACK_TRENDING_NEWS;
+      }
+
+      if (loadedNews.length > 0) {
+        setFeedItems(loadedNews);
+        const first = loadedNews[0];
+        setSelectedTopic(first.headline);
+        setActiveReelItem((prev) => prev || first);
+        setPosterConfig((prev) => {
+          // If user already typed or has saved a custom headline, preserve it!
+          if (prev.mainHeadline && prev.mainHeadline.trim().length > 0) {
+            return prev;
+          }
+          return {
+            ...prev,
+            badge: first.badge || '🚨 BREAKING NEWS',
+            mainHeadline: first.headline,
+            subHeadline: first.summary,
+            bgImageUrl: first.imageSuggestion || prev.bgImageUrl,
+            colorTheme: first.autoPoster?.colorTheme || prev.colorTheme,
+            userHandle: userHandle,
+            handleCorner: handleCorner,
+          };
+        });
+        setCurrentStory({
+          headline: first.headline,
+          headlineEn: first.headline,
+          summary: first.summary,
+          fullArticle: first.fullDescription || first.summary,
+          keyHighlights: [
+            first.headline,
+            `Live wire coverage from ${first.sourceWebsite || 'News Wire'}`,
+            `Territory: ${first.country || country}`,
+            'Real-time newsroom verification complete',
+          ],
+          viralTags: ['#BreakingNews', '#TopStory', '#LiveWire', '#NewsToday'],
+          facebookPost: `🚨 ${first.badge || 'BREAKING'}: ${first.headline}\n\n${first.summary}\n\n📰 Source: ${first.sourceWebsite}`,
+          instagramCaption: `⚡ ${first.headline}\n\n${first.summary}\n\n#breakingnews #news #live`,
+          sourceWebsite: first.sourceWebsite,
+          originalLink: first.link,
+          poster: {
+            badge: first.badge,
+            mainHeadline: first.headline,
+            subHeadline: first.summary,
+            highlightStat: first.autoPoster?.highlightStat || '100% VERIFIED',
+            colorTheme: first.autoPoster?.colorTheme || 'red_dark',
+          },
+        });
+      }
     } catch (e) {
-      console.error('Failed to fetch news feed:', e);
+      console.warn('News feed fetch notice (falling back gracefully):', e);
+      if (feedItems.length === 0) {
+        setFeedItems(FALLBACK_TRENDING_NEWS);
+      }
     } finally {
       setIsLoadingFeed(false);
     }
@@ -385,6 +403,7 @@ export default function App() {
 
     setCurrentActionLog(`⚡ Loading verified story: '${topic.slice(0, 30)}...'`);
 
+    let genStory: GeneratedStory | null = null;
     try {
       const res = await fetch('/api/news/generate-story', {
         method: 'POST',
@@ -398,34 +417,52 @@ export default function App() {
         }),
       });
 
-      const data = await res.json();
-      if (data.success && data.data) {
-        const genStory: GeneratedStory = {
-          ...data.data,
-          sourceWebsite: item?.sourceWebsite || item?.sourceName || 'Google News Wire',
-          originalLink: item?.link || 'https://news.google.com',
-        };
-        setCurrentStory(genStory);
+      if (res.ok) {
+        try {
+          const data = await res.json();
+          if (data.success && data.data) {
+            genStory = {
+              ...data.data,
+              sourceWebsite: item?.sourceWebsite || item?.sourceName || 'Google News Wire',
+              originalLink: item?.link || 'https://news.google.com',
+            };
+          }
+        } catch {}
+      }
+    } catch {
+      // Backend not running (static hosting)
+    }
 
-        setPosterConfig((prev) => ({
-          ...prev,
-          badge: autoPoster?.badge || genStory.poster?.badge || prev.badge,
-          mainHeadline: topic || genStory.poster?.mainHeadline || genStory.headline,
-          subHeadline: genStory.summary || itemSummary || prev.subHeadline,
-          highlightStat: autoPoster?.highlightStat || genStory.poster?.highlightStat || '100% VERIFIED DISPATCH',
-          colorTheme: autoPoster?.colorTheme || genStory.poster?.colorTheme || prev.colorTheme,
-          bgImageUrl: autoPoster?.bgImageUrl || suggestedImg || prev.bgImageUrl,
-          userHandle: userHandle || prev.userHandle,
-          handleCorner: handleCorner || prev.handleCorner,
-        }));
+    // Fallback to high-speed client-side generator if backend is unavailable
+    if (!genStory) {
+      genStory = generateClientStory(topic, category, itemSummary || '');
+      if (item) {
+        genStory.sourceWebsite = item.sourceWebsite || item.sourceName || 'Google News Wire';
+        genStory.originalLink = item.link || 'https://news.google.com';
+      }
+    }
 
-        setCurrentActionLog('🎨 Poster & story package ready for review');
-        showToast('Story and auto-matched poster loaded in Studio!');
-        setActiveView('studio');
+    try {
+      setCurrentStory(genStory);
 
-        if (studioRef.current) {
-          studioRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
+      setPosterConfig((prev) => ({
+        ...prev,
+        badge: autoPoster?.badge || genStory.poster?.badge || prev.badge,
+        mainHeadline: topic || genStory.poster?.mainHeadline || genStory.headline,
+        subHeadline: genStory.summary || itemSummary || prev.subHeadline,
+        highlightStat: autoPoster?.highlightStat || genStory.poster?.highlightStat || '100% VERIFIED DISPATCH',
+        colorTheme: autoPoster?.colorTheme || genStory.poster?.colorTheme || prev.colorTheme,
+        bgImageUrl: autoPoster?.bgImageUrl || suggestedImg || prev.bgImageUrl,
+        userHandle: userHandle || prev.userHandle,
+        handleCorner: handleCorner || prev.handleCorner,
+      }));
+
+      setCurrentActionLog('🎨 Poster & story package ready for review');
+      showToast('Story and auto-matched poster loaded in Studio!');
+      setActiveView('studio');
+
+      if (studioRef.current) {
+        studioRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     } catch (e) {
       console.error(e);

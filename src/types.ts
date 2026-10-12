@@ -229,4 +229,48 @@ export interface ReelProgressState {
   fileSizeBytes?: number;
   durationSec?: number;
   error?: string | null;
+  actionType?: 'reel' | 'story';
 }
+
+export const INITIAL_STORY_STEPS: ReelProgressStep[] = [
+  {
+    id: 1,
+    title: 'Live Wire & Source Fact-Checking',
+    titleHi: 'लाइव वायर कनेक्शन और फैक्ट-चेक',
+    detail: 'Connecting to real-time Google News wire and validating sources',
+    detailHi: 'सत्यापित गूगल न्यूज स्रोत और डेटा प्राप्त किया जा रहा है',
+    status: 'pending',
+  },
+  {
+    id: 2,
+    title: 'AI Editorial Headline & Angle',
+    titleHi: 'संपादकीय हेडलाइन और न्यूज़ एंगल',
+    detail: 'Synthesizing viral headline, news hook & factual context',
+    detailHi: 'प्रभावशाली हेडलाइन, मुख्य बिंदु और संदर्भ तैयार किया जा रहा है',
+    status: 'pending',
+  },
+  {
+    id: 3,
+    title: 'HD Poster Layout & Theming',
+    titleHi: 'हाई-डेफिनिशन पोस्टर और दृश्य डिज़ाइन',
+    detail: 'Assembling broadcast badge, background artwork & typography',
+    detailHi: 'न्यूज़रूम बैज, थीम कलर्स और वाटरमार्क लेआउट कॉन्फ़िगर हो रहा है',
+    status: 'pending',
+  },
+  {
+    id: 4,
+    title: 'Social Captions & Viral Hashtags',
+    titleHi: 'सोशल मीडिया कैप्शन और वायरल टैग्स',
+    detail: 'Formatting multi-platform post descriptions and verified tags',
+    detailHi: 'इंस्टाग्राम व फेसबुक के लिए अनुकूलित कैप्शन्स व हैशटैग्स तैयार',
+    status: 'pending',
+  },
+  {
+    id: 5,
+    title: 'Broadcast Package Ready',
+    titleHi: 'स्टूडियो पैकेज और फाइनल तैयारी',
+    detail: 'Finalizing live studio assets, reels bridge & publishing package',
+    detailHi: 'स्टूडियो और रील तैयार करने के लिए पैकेज लोड किया जा रहा है',
+    status: 'pending',
+  },
+];

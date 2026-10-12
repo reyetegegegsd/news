@@ -17,6 +17,10 @@ import {
   ArrowRight,
   AlertCircle,
   Share2,
+  Newspaper,
+  Palette,
+  Type,
+  Hash,
 } from 'lucide-react';
 import { ReelProgressState } from '../types';
 
@@ -26,6 +30,8 @@ interface StepProgressBarModalProps {
   onDownload?: () => void;
   onPreview?: () => void;
   onPublishToInstagram?: () => void;
+  onOpenStudio?: () => void;
+  onOpenReels?: () => void;
   onRetry?: () => void;
 }
 
@@ -35,6 +41,8 @@ export const StepProgressBarModal: React.FC<StepProgressBarModalProps> = ({
   onDownload,
   onPreview,
   onPublishToInstagram,
+  onOpenStudio,
+  onOpenReels,
   onRetry,
 }) => {
   const [isMinimized, setIsMinimized] = useState<boolean>(false);
@@ -49,6 +57,8 @@ export const StepProgressBarModal: React.FC<StepProgressBarModalProps> = ({
   }, [progressState.logs]);
 
   if (!progressState.isVisible) return null;
+
+  const isStoryMode = progressState.actionType === 'story';
 
   // Floating Minimized Pill at bottom-right
   if (isMinimized) {
@@ -88,7 +98,7 @@ export const StepProgressBarModal: React.FC<StepProgressBarModalProps> = ({
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
               <p className="text-xs font-bold text-white truncate">
-                {progressState.isComplete ? '🎉 तैयार हो गया!' : '🎬 रील तैयार हो रही है'}
+                {progressState.isComplete ? '🎉 तैयार हो गया!' : isStoryMode ? '📰 स्टोरी तैयार हो रही है' : '🎬 रील तैयार हो रही है'}
               </p>
             </div>
             <p className="text-[11px] text-slate-400 truncate mt-0.5">
@@ -121,6 +131,22 @@ export const StepProgressBarModal: React.FC<StepProgressBarModalProps> = ({
 
   // Helper step icons
   const getStepIcon = (stepId: number) => {
+    if (isStoryMode) {
+      switch (stepId) {
+        case 1:
+          return <Zap className="w-4 h-4" />;
+        case 2:
+          return <Type className="w-4 h-4" />;
+        case 3:
+          return <Palette className="w-4 h-4" />;
+        case 4:
+          return <Hash className="w-4 h-4" />;
+        case 5:
+          return <Sparkles className="w-4 h-4" />;
+        default:
+          return <Clock className="w-4 h-4" />;
+      }
+    }
     switch (stepId) {
       case 1:
         return <Zap className="w-4 h-4" />;
@@ -147,20 +173,20 @@ export const StepProgressBarModal: React.FC<StepProgressBarModalProps> = ({
         {/* Top Header */}
         <div className="px-5 py-4 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/80 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-tr from-rose-600 via-pink-600 to-amber-600 text-white shadow-lg shadow-rose-950/50">
-              <Film className="w-5 h-5 animate-pulse" />
+            <div className={`p-2.5 rounded-xl ${isStoryMode ? 'bg-gradient-to-tr from-indigo-600 via-blue-600 to-cyan-500' : 'bg-gradient-to-tr from-rose-600 via-pink-600 to-amber-600'} text-white shadow-lg`}>
+              {isStoryMode ? <Newspaper className="w-5 h-5 animate-pulse" /> : <Film className="w-5 h-5 animate-pulse" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-                  <span>🎬 AI Reel Studio - लाइव प्रोग्रेस ट्रैकर</span>
+                  <span>{isStoryMode ? '📰 Live Wire Editorial - स्टेप-बाय-स्टेप प्रोग्रेस ट्रैकर' : '🎬 AI Reel Studio - लाइव प्रोग्रेस ट्रैकर'}</span>
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
                   Step-by-Step
                 </span>
               </div>
               <p className="text-xs text-slate-400 truncate max-w-md mt-0.5">
-                {progressState.headline ? `📰 ${progressState.headline}` : '9:16 वर्टिकल रील वीडियो जेनरेशन'}
+                {progressState.headline ? `📰 ${progressState.headline}` : isStoryMode ? 'लाइव वायर से पूर्ण पत्रकारिता स्टोरी और पोस्टर जेनरेशन' : '9:16 वर्टिकल रील वीडियो जेनरेशन'}
               </p>
             </div>
           </div>
@@ -410,10 +436,14 @@ export const StepProgressBarModal: React.FC<StepProgressBarModalProps> = ({
                 </div>
                 <div className="flex-1">
                   <h4 className="text-sm font-black text-white">
-                    🎉 बधाई हो! आपका 9:16 रील वीडियो पूरी तरह तैयार है
+                    {isStoryMode
+                      ? '🎉 बधाई हो! आपकी लाइव वायर स्टोरी और पोस्टर पूरी तरह तैयार हैं'
+                      : '🎉 बधाई हो! आपका 9:16 रील वीडियो पूरी तरह तैयार है'}
                   </h4>
                   <p className="text-xs text-emerald-300/90 mt-0.5">
-                    100% क्लियर वॉइसओवर ऑडियो, सिंक किए गए सबटाइटल्स और न्यूज़ विज़ुअल्स सुरक्षित हो गए हैं।
+                    {isStoryMode
+                      ? '100% सत्यापित Google News वायर फैक्ट्स, विस्तृत संपादकीय रिपोर्ट और HD पोस्टर्स तैयार हो चुके हैं।'
+                      : '100% क्लियर वॉइसओवर ऑडियो, सिंक किए गए सबटाइटल्स और न्यूज़ विज़ुअल्स सुरक्षित हो गए हैं।'}
                   </p>
                   {progressState.fileSizeBytes && (
                     <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-400 font-mono">
@@ -428,7 +458,27 @@ export const StepProgressBarModal: React.FC<StepProgressBarModalProps> = ({
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-2.5 mt-4 pt-3 border-t border-slate-800">
-                {onDownload && (
+                {isStoryMode && onOpenStudio && (
+                  <button
+                    onClick={onOpenStudio}
+                    className="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-black rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-950/50 cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    <span>🎨 पोस्टर स्टूडियो में खोलें (Open in Poster Studio)</span>
+                  </button>
+                )}
+
+                {isStoryMode && onOpenReels && (
+                  <button
+                    onClick={onOpenReels}
+                    className="px-3.5 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-md shadow-rose-950/40 cursor-pointer"
+                  >
+                    <Film className="w-3.5 h-3.5 text-white" />
+                    <span>🎬 रील स्टूडियो में बनाएं (Create Reel)</span>
+                  </button>
+                )}
+
+                {!isStoryMode && onDownload && (
                   <button
                     onClick={onDownload}
                     className="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 cursor-pointer"
@@ -438,7 +488,7 @@ export const StepProgressBarModal: React.FC<StepProgressBarModalProps> = ({
                   </button>
                 )}
 
-                {onPreview && (
+                {!isStoryMode && onPreview && (
                   <button
                     onClick={onPreview}
                     className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
@@ -448,7 +498,7 @@ export const StepProgressBarModal: React.FC<StepProgressBarModalProps> = ({
                   </button>
                 )}
 
-                {onPublishToInstagram && (
+                {!isStoryMode && onPublishToInstagram && (
                   <button
                     onClick={onPublishToInstagram}
                     className="px-3.5 py-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-md shadow-pink-950/40 cursor-pointer"
