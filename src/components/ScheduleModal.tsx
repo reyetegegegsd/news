@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { ScheduledPost, ScheduleSettings, TrendingNewsItem } from '../types';
 import { exportReelVideo } from '../utils/reelVideoExporter';
+import { generateClientVerifiedNews } from '../utils/clientNewsGenerator';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -111,16 +112,24 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
     setIsLoading(true);
     try {
       const res = await fetch('/api/schedule');
-      const data = await res.json();
-      if (data.success) {
-        if (Array.isArray(data.posts)) setPosts(data.posts);
-        if (data.settings) setSettings(data.settings);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          if (Array.isArray(data.posts)) setPosts(data.posts);
+          if (data.settings) setSettings(data.settings);
+          return;
+        }
       }
-    } catch (e) {
-      console.error('Failed to fetch schedule:', e);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch {}
+
+    // Fallback to localStorage for static hosting
+    try {
+      const localPosts = localStorage.getItem('viralnews_schedule_posts');
+      if (localPosts) setPosts(JSON.parse(localPosts));
+      const localSettings = localStorage.getItem('viralnews_schedule_settings');
+      if (localSettings) setSettings(JSON.parse(localSettings));
+    } catch {}
+    setIsLoading(false);
   };
 
   // Update schedule settings
@@ -128,14 +137,18 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
     const updated = { ...settings, ...partial };
     setSettings(updated);
     try {
+      localStorage.setItem('viralnews_schedule_settings', JSON.stringify(updated));
+    } catch {}
+
+    try {
       await fetch('/api/schedule/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(partial),
       });
       showToast('Settings auto-saved successfully!');
-    } catch (e) {
-      console.error(e);
+    } catch {
+      showToast('Settings saved locally!');
     }
   };
 
@@ -156,15 +169,69 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
           preRenderMinutesBefore: settings.preRenderMinutesBefore || 30,
         }),
       });
-      const data = await res.json();
-      if (data.success && Array.isArray(data.posts)) {
-        setPosts(data.posts);
-        if (data.settings) setSettings(data.settings);
-        showToast(`🎉 ${data.daysCount}-Day Schedule Generated! (${data.count} Verified Video Slots Ready)`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.posts)) {
+          setPosts(data.posts);
+          if (data.settings) setSettings(data.settings);
+          try {
+            localStorage.setItem('viralnews_schedule_posts', JSON.stringify(data.posts));
+          } catch {}
+          showToast(`🎉 ${data.daysCount}-Day Schedule Generated! (${data.count} Verified Video Slots Ready)`);
+          return;
+        }
       }
+    } catch {}
+
+    // Client fallback: generate multi-day slots instantly in browser
+    try {
+      const totalSlots = (settings.daysCount || 2) * (settings.postsPerDay || 4);
+      const clientNews = generateClientVerifiedNews(
+        settings.language || 'Hindi',
+        settings.country || currentCountry || 'India',
+        '',
+        'Today',
+        totalSlots
+      );
+
+      const generatedSlots: ScheduledPost[] = clientNews.news.slice(0, totalSlots).map((item, idx) => {
+        const postsPerDay = settings.postsPerDay || 4;
+        const dayOffset = Math.floor(idx / postsPerDay);
+        const slotIdx = idx % postsPerDay;
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + dayOffset);
+        const dateStr = targetDate.toISOString().split('T')[0];
+
+        // Slot schedule times (e.g. 09:00, 13:00, 17:00, 21:00)
+        const times = ['09:00', '13:00', '17:00', '21:00', '23:30'];
+        const targetTime = times[slotIdx % times.length];
+
+        return {
+          id: `slot-${Date.now()}-${idx}`,
+          targetDate: dateStr,
+          targetTime,
+          status: 'scheduled',
+          headline: item.headline,
+          summary: item.summary,
+          topic: item.headline,
+          theme: (settings.theme as any) || 'red_dark',
+          badge: item.badge,
+          coverImageUrl: item.autoPoster?.bgImageUrl || item.imageSuggestion || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1080&auto=format&fit=crop&q=85',
+          language: settings.language || 'Hindi',
+          preRenderMinutesBefore: settings.preRenderMinutesBefore || 30,
+          publishedPlatforms: [],
+          fullStory: item.fullDescription || item.summary,
+        };
+      });
+
+      setPosts(generatedSlots);
+      try {
+        localStorage.setItem('viralnews_schedule_posts', JSON.stringify(generatedSlots));
+      } catch {}
+      showToast(`🎉 ${settings.daysCount || 2}-Day Schedule Generated! (${generatedSlots.length} Video Slots Ready)`);
     } catch (e) {
       console.error(e);
-      showToast('Error generating schedule');
+      showToast('Error generating schedule slots');
     } finally {
       setIsGenerating(false);
     }

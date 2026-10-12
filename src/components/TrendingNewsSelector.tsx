@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingNewsItem } from '../types';
 import { COUNTRIES } from '../data/countries';
-import { FALLBACK_TRENDING_NEWS } from '../data/fallbackNews';
+import { LANGUAGES } from '../data/languages';
 import { generateClient50Styles, generateClientVerifiedNews } from '../utils/clientNewsGenerator';
 import {
   RefreshCw,
@@ -9,6 +9,9 @@ import {
   Sparkles,
   ShieldCheck,
   X,
+  Globe2,
+  Clock,
+  Filter,
 } from 'lucide-react';
 
 interface TrendingNewsSelectorProps {
@@ -24,6 +27,8 @@ interface TrendingNewsSelectorProps {
   selectedTopic: string;
   selectedCountry: string;
   onCountryChange: (countryCode: string) => void;
+  selectedLanguage: string;
+  onLanguageChange?: (languageName: string) => void;
   onNewsFeedLoaded?: (items: TrendingNewsItem[]) => void;
   activeTimeFilter: string;
   onTimeFilterChange: (timeFilter: string) => void;
@@ -48,6 +53,9 @@ const TIME_FILTERS = [
 
 export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
   selectedCountry,
+  selectedLanguage,
+  onCountryChange,
+  onLanguageChange,
   onNewsFeedLoaded,
   activeTimeFilter,
   onTimeFilterChange,
@@ -59,19 +67,22 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchGoogleNewsFeed(activeCategory, activeTimeFilter, selectedCountry, activeSearchTopic);
-  }, [activeCategory, activeTimeFilter, selectedCountry]);
+    fetchGoogleNewsFeed(activeCategory, activeTimeFilter, selectedCountry, selectedLanguage, activeSearchTopic);
+  }, [activeCategory, activeTimeFilter, selectedCountry, selectedLanguage]);
 
   const fetchGoogleNewsFeed = async (
     cat: string,
     timeFilter: string,
     country: string,
+    lang: string,
     queryToUse?: string
   ) => {
     setIsLoading(true);
     const q = (queryToUse !== undefined ? queryToUse : customSearchQuery).trim();
+    const cName = COUNTRIES.find((c) => c.code === country)?.name || country;
+
     try {
-      const url = `/api/news/trending?category=${cat}&country=${country}&timeFilter=${timeFilter}&limit=50${
+      const url = `/api/news/trending?category=${cat}&country=${country}&language=${encodeURIComponent(lang)}&timeFilter=${timeFilter}&limit=50${
         q ? `&q=${encodeURIComponent(q)}` : ''
       }`;
       const res = await fetch(url);
@@ -88,26 +99,25 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
           // If response is not JSON
         }
       }
-      // Fallback for static GitHub Pages mode
+
+      // Fallback for static hosting (GitHub Pages, etc.)
       if (onNewsFeedLoaded) {
         if (q) {
           const generated = generateClient50Styles(q, `Live dispatch for ${q}`);
-          onNewsFeedLoaded(generated.slice(0, 16));
+          onNewsFeedLoaded(generated.slice(0, 20));
         } else {
-          const cName = COUNTRIES.find((c) => c.code === country)?.name || country;
-          const generated = generateClientVerifiedNews('Hindi', cName, '', timeFilter, 20);
+          const generated = generateClientVerifiedNews(lang, cName, '', timeFilter, 20, cat);
           onNewsFeedLoaded(generated.news);
         }
       }
     } catch (e) {
-      console.warn('Country news fetch notice (using fallback):', e);
+      console.warn('Country news fetch notice (using client news generator):', e);
       if (onNewsFeedLoaded) {
         if (q) {
           const generated = generateClient50Styles(q, `Live dispatch for ${q}`);
-          onNewsFeedLoaded(generated.slice(0, 16));
+          onNewsFeedLoaded(generated.slice(0, 20));
         } else {
-          const cName = COUNTRIES.find((c) => c.code === country)?.name || country;
-          const generated = generateClientVerifiedNews('Hindi', cName, '', timeFilter, 20);
+          const generated = generateClientVerifiedNews(lang, cName, '', timeFilter, 20, cat);
           onNewsFeedLoaded(generated.news);
         }
       }
@@ -121,41 +131,39 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
     const trimmed = customSearchQuery.trim();
     if (!trimmed) {
       setActiveSearchTopic('');
-      fetchGoogleNewsFeed(activeCategory, activeTimeFilter, selectedCountry, '');
+      fetchGoogleNewsFeed(activeCategory, activeTimeFilter, selectedCountry, selectedLanguage, '');
       return;
     }
     setActiveSearchTopic(trimmed);
-    fetchGoogleNewsFeed(activeCategory, activeTimeFilter, selectedCountry, trimmed);
+    fetchGoogleNewsFeed(activeCategory, activeTimeFilter, selectedCountry, selectedLanguage, trimmed);
   };
 
   const handleClearSearch = () => {
     setCustomSearchQuery('');
     setActiveSearchTopic('');
-    fetchGoogleNewsFeed(activeCategory, activeTimeFilter, selectedCountry, '');
+    fetchGoogleNewsFeed(activeCategory, activeTimeFilter, selectedCountry, selectedLanguage, '');
   };
 
   const currentCountryObj =
     COUNTRIES.find((c) => c.code === selectedCountry) || COUNTRIES[0];
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl p-3 sm:p-4 space-y-3 shadow-xs">
+    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 space-y-3 shadow-md">
       {/* Category Segmented Bar & Time Filter */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Category Segmented Control */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none" role="tablist">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        {/* Category Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none max-w-full" role="tablist">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => {
                 setActiveCategory(cat.id);
-                if (activeSearchTopic) {
-                  fetchGoogleNewsFeed(cat.id, activeTimeFilter, selectedCountry, activeSearchTopic);
-                }
+                fetchGoogleNewsFeed(cat.id, activeTimeFilter, selectedCountry, selectedLanguage, activeSearchTopic);
               }}
-              className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeCategory === cat.id
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-slate-800/60'
+                  ? 'bg-rose-600 text-white shadow-md shadow-rose-950/60 ring-1 ring-rose-400'
+                  : 'bg-slate-950/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
               }`}
             >
               {cat.label}
@@ -163,15 +171,16 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
           ))}
         </div>
 
-        {/* Time Filters */}
-        <div className="flex items-center gap-1 bg-slate-950/60 p-1 border border-slate-800/60 rounded-lg text-xs">
+        {/* Time Window Buttons */}
+        <div className="flex items-center gap-1 bg-slate-950/90 border border-slate-800 rounded-xl p-1 text-xs shrink-0">
+          <Clock className="w-3.5 h-3.5 text-slate-500 ml-1.5 hidden xs:inline" />
           {TIME_FILTERS.map((tf) => (
             <button
               key={tf.id}
               onClick={() => onTimeFilterChange(tf.id)}
-              className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 activeTimeFilter === tf.id
-                  ? 'bg-slate-800 text-white font-medium shadow-xs'
+                  ? 'bg-amber-500 text-black shadow-xs font-black'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -181,63 +190,47 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
         </div>
       </div>
 
-      {/* Search Input Bar - Search Google News Wire */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-        <form onSubmit={handleCustomSearch} className="relative flex-1 flex items-center">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+      {/* Live Keyword Search and Country Summary Strip */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-800/80">
+        {/* Search Input Bar */}
+        <form onSubmit={handleCustomSearch} className="flex-1 max-w-md relative">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={customSearchQuery}
             onChange={(e) => setCustomSearchQuery(e.target.value)}
-            placeholder="Search news topic (IPL, Business, Weather, Tech, Crime)..."
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-24 sm:pr-28 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-rose-500 transition-colors font-normal"
+            placeholder={`Search news in ${currentCountryObj.name} (${selectedLanguage})...`}
+            className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-rose-500 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden transition-colors"
           />
           {customSearchQuery && (
             <button
               type="button"
-              onClick={() => setCustomSearchQuery('')}
-              className="absolute right-24 sm:right-28 mr-1 text-slate-500 hover:text-slate-300 p-0.5"
-              title="Clear text"
+              onClick={handleClearSearch}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white p-0.5"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
-          <button
-            type="submit"
-            disabled={isLoading || !customSearchQuery.trim()}
-            className="absolute right-1 px-2.5 sm:px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:opacity-40 text-white text-xs font-medium rounded-md transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
-          >
-            {isLoading ? (
-              <>
-                <RefreshCw className="w-3 h-3 animate-spin text-white" />
-                <span className="hidden sm:inline">Searching...</span>
-              </>
-            ) : (
-              <span>Search</span>
-            )}
-          </button>
         </form>
-      </div>
 
-      {/* Active Verified Search Banner */}
-      {activeSearchTopic && (
-        <div className="flex items-center justify-between bg-slate-950 border border-emerald-900/60 rounded-lg px-3 py-2 text-xs text-emerald-300">
-          <div className="flex items-center gap-2 truncate">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="truncate">
-              Showing verified dispatches for: <strong className="text-white">"{activeSearchTopic}"</strong>
-            </span>
-          </div>
+        {/* Status & Quick Refresh */}
+        <div className="flex items-center justify-between sm:justify-end gap-2 text-xs">
+          <span className="text-slate-400 text-[11px] flex items-center gap-1 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Wire: <strong>{currentCountryObj.name}</strong> • <strong>{selectedLanguage}</strong></span>
+          </span>
+
           <button
-            type="button"
-            onClick={handleClearSearch}
-            className="flex items-center gap-1 text-xs text-slate-300 hover:text-white px-2.5 py-1 rounded bg-slate-900 border border-slate-800 shrink-0 ml-2 transition-colors"
+            onClick={() => fetchGoogleNewsFeed(activeCategory, activeTimeFilter, selectedCountry, selectedLanguage, activeSearchTopic)}
+            disabled={isLoading}
+            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 rounded-xl font-bold flex items-center gap-1.5 text-xs transition cursor-pointer"
+            title="Refresh Headlines"
           >
-            <X className="w-3 h-3 text-slate-400" />
-            <span>Reset to Top Stories</span>
+            <RefreshCw className={`w-3.5 h-3.5 text-rose-400 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>{isLoading ? 'Loading...' : 'Refresh'}</span>
           </button>
         </div>
-      )}
+      </div>
     </div>
   );
 };

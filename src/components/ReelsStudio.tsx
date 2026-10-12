@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { TrendingNewsItem, ReelProgressState, ReelProgressStep } from '../types';
 import { StepProgressBarModal } from './StepProgressBarModal';
 import { NEWS_BACKGROUNDS } from '../data/backgrounds';
+import { FALLBACK_TRENDING_NEWS } from '../data/fallbackNews';
 import { PRESET_BACKGROUND_VIDEOS } from '../data/backgroundVideos';
 import type { NewsTrackType } from '../utils/newsAudioSynth';
 import { exportReelVideo, downloadReelBlob, getSupportedVideoMimeType } from '../utils/reelVideoExporter';
@@ -409,13 +410,20 @@ export const ReelsStudio: React.FC<ReelsStudioProps> = ({
     }
     try {
       const res = await fetch('/api/news/trending?category=all&country=IN&limit=5');
-      const data = await res.json();
-      if (data.news && data.news.length > 0) {
-        if (onSelectOtherItem) onSelectOtherItem(data.news[0]);
-        applyReelItem(data.news[0]);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.news && data.news.length > 0) {
+          if (onSelectOtherItem) onSelectOtherItem(data.news[0]);
+          applyReelItem(data.news[0]);
+          return;
+        }
       }
     } catch (e) {
-      console.error('Failed to auto-detect reel news:', e);
+      console.warn('Failed to auto-detect reel news, using fallback:', e);
+    }
+    if (FALLBACK_TRENDING_NEWS && FALLBACK_TRENDING_NEWS.length > 0) {
+      if (onSelectOtherItem) onSelectOtherItem(FALLBACK_TRENDING_NEWS[0]);
+      applyReelItem(FALLBACK_TRENDING_NEWS[0]);
     }
   };
 

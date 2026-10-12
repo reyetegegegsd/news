@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { PosterConfig, TrendingNewsItem } from '../types';
 import { NEWS_BACKGROUNDS, NewsBackground } from '../data/backgrounds';
+import { FALLBACK_TRENDING_NEWS } from '../data/fallbackNews';
 import {
   Download,
   Sparkles,
@@ -118,12 +119,18 @@ export const PosterStudio: React.FC<PosterStudioProps> = ({
     }
     try {
       const res = await fetch('/api/news/trending?category=all&country=IN&limit=5');
-      const data = await res.json();
-      if (data.news && data.news.length > 0) {
-        applyNewsItem(data.news[0]);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.news && data.news.length > 0) {
+          applyNewsItem(data.news[0]);
+          return;
+        }
       }
     } catch (e) {
-      console.error('Failed to auto-detect live news:', e);
+      console.warn('Failed to auto-detect live news, using fallback:', e);
+    }
+    if (FALLBACK_TRENDING_NEWS && FALLBACK_TRENDING_NEWS.length > 0) {
+      applyNewsItem(FALLBACK_TRENDING_NEWS[0]);
     }
   };
 

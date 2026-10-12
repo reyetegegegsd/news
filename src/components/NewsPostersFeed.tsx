@@ -1035,17 +1035,46 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
       </div>
 
       {/* 4-COLUMN GOOGLE-VERIFIED BROADCAST POSTERS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-        {items.map((item, index) => {
-          const cfg = getPosterConfigForItem(item);
-          const isSaved = savedIds.includes(item.id);
-          const countryInfo = getCountryInfo(item.country);
-
-          return (
-            <article
-              key={item.id}
-              className="bg-slate-900/70 border border-slate-800/80 rounded-xl overflow-hidden flex flex-col justify-between hover:border-slate-700 transition"
+      {items.length === 0 ? (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 sm:p-14 text-center flex flex-col items-center justify-center max-w-xl mx-auto my-6 space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+            <Sparkles className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-white">No News Dispatches In Current View</h3>
+            <p className="text-xs text-slate-400 max-w-md">
+              Load live verified headlines or click below to generate an editorial series for {selectedCountry || 'your region'}.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => onResetToLiveNews?.()}
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-2 cursor-pointer"
             >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Load Latest Verified Headlines</span>
+            </button>
+            <button
+              onClick={() => setCustomBoxOpen(true)}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>Generate 50+ Custom Styles</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+          {items.map((item, index) => {
+            const cfg = getPosterConfigForItem(item);
+            const isSaved = savedIds.includes(item.id);
+            const countryInfo = getCountryInfo(item.country);
+
+            return (
+              <article
+                key={item.id}
+                className="bg-slate-900/70 border border-slate-800/80 rounded-xl overflow-hidden flex flex-col justify-between hover:border-slate-700 transition"
+              >
               {/* TOP EDITORIAL DATELINE WITH EXACT TIME & GOOGLE VERIFIED BADGE */}
               <div className="px-3 py-2 bg-slate-950 border-b border-slate-800/80 flex items-center justify-between text-xs text-slate-400 gap-1.5">
                 <div className="flex items-center gap-1.5 truncate">
@@ -1379,7 +1408,8 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
             </article>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* STEP-BY-STEP REEL PROGRESS MODAL FOR FEED CARD EXPORTS */}
       {reelProgressState.isVisible && (

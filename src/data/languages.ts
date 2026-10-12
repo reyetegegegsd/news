@@ -1,23 +1,23 @@
 export interface LanguageOption {
   code: string;
   name: string;
-  nativeName: string;
-  hl: string;
+  localName: string;
   flag: string;
+  speechCode: string;
 }
 
 export const LANGUAGES: LanguageOption[] = [
-  { code: 'hi', name: 'Hindi', nativeName: 'हिंदी', hl: 'hi', flag: '🇮🇳' },
-  { code: 'en', name: 'English', nativeName: 'English', hl: 'en', flag: '🇺🇸' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español', hl: 'es', flag: '🇪🇸' },
-  { code: 'fr', name: 'French', nativeName: 'Français', hl: 'fr', flag: '🇫🇷' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch', hl: 'de', flag: '🇩🇪' },
-  { code: 'ar', name: 'Arabic', nativeName: 'العربية', hl: 'ar', flag: '🇸🇦' },
-  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', hl: 'bn', flag: '🇧🇩' },
-  { code: 'mr', name: 'Marathi', nativeName: 'मराठी', hl: 'mr', flag: '🇮🇳' },
-  { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી', hl: 'gu', flag: '🇮🇳' },
-  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', hl: 'ta', flag: '🇮🇳' },
-  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', hl: 'te', flag: '🇮🇳' },
-  { code: 'ru', name: 'Russian', nativeName: 'Русский', hl: 'ru', flag: '🇷🇺' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語', hl: 'ja', flag: '🇯🇵' },
+  { code: 'hi', name: 'Hindi', localName: 'हिंदी', flag: '🇮🇳', speechCode: 'hi-IN' },
+  { code: 'en', name: 'English', localName: 'English', flag: '🇬🇧', speechCode: 'en-US' },
+  { code: 'ur', name: 'Urdu', localName: 'اردو', flag: '🇵🇰', speechCode: 'ur-PK' },
+  { code: 'mr', name: 'Marathi', localName: 'मराठी', flag: '🇮🇳', speechCode: 'mr-IN' },
+  { code: 'gu', name: 'Gujarati', localName: 'ગુજરાતી', flag: '🇮🇳', speechCode: 'gu-IN' },
+  { code: 'bn', name: 'Bengali', localName: 'বাংলা', flag: '🇮🇳', speechCode: 'bn-IN' },
+  { code: 'ta', name: 'Tamil', localName: 'தமிழ்', flag: '🇮🇳', speechCode: 'ta-IN' },
+  { code: 'te', name: 'Telugu', localName: 'తెలుగు', flag: '🇮🇳', speechCode: 'te-IN' },
+  { code: 'pa', name: 'Punjabi', localName: 'ਪੰਜਾਬੀ', flag: '🇮🇳', speechCode: 'pa-IN' },
+  { code: 'es', name: 'Spanish', localName: 'Español', flag: '🇪🇸', speechCode: 'es-ES' },
+  { code: 'fr', name: 'French', localName: 'Français', flag: '🇫🇷', speechCode: 'fr-FR' },
+  { code: 'de', name: 'German', localName: 'Deutsch', flag: '🇩🇪', speechCode: 'de-DE' },
+  { code: 'ar', name: 'Arabic', localName: 'العربية', flag: '🇸🇦', speechCode: 'ar-SA' },
 ];
