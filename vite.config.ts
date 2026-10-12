@@ -1,16 +1,11 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
-  // Support GitHub Pages repository path (e.g. /news/) or relative './'
-  const repoName = process.env.GITHUB_REPOSITORY
-    ? (process.env.GITHUB_REPOSITORY.endsWith('.github.io') ? '/' : `/${process.env.GITHUB_REPOSITORY.split('/')[1]}/`)
-    : './';
-
   return {
-    base: repoName,
+    base: '/', // Custom domain ke liye hamesha '/' hona chahiye
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
