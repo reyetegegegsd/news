@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
@@ -33,7 +33,13 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build project
-        run: npx vite build --base=/news/
+        run: npx vite build
+
+      - name: Copy CNAME to dist (for custom domain)
+        run: |
+          if [ -f CNAME ]; then
+            cp CNAME ./dist/CNAME
+          fi
 
       - name: Upload dist artifact
         uses: actions/upload-pages-artifact@v3
