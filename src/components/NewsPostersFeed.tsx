@@ -926,9 +926,9 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
       )}
 
       {/* STREAMLINED USERNAME & WATERMARK STRIP (Allows hiding username completely!) */}
-      <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3">
-          <span className="font-semibold text-slate-300">Poster Username:</span>
+      <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3 sm:px-4 sm:py-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className="font-semibold text-slate-300 text-xs">Poster Username:</span>
           <div className="flex items-center bg-slate-950 border border-slate-800 focus-within:border-slate-700 rounded-md px-2.5 py-1">
             <span className="text-slate-500 font-bold mr-1">@</span>
             <input
@@ -941,16 +941,16 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
                 }
               }}
               placeholder="channel_handle"
-              className="bg-transparent text-xs text-white font-medium focus:outline-none w-32 sm:w-40 placeholder-slate-600"
+              className="bg-transparent text-xs text-white font-medium focus:outline-none w-28 sm:w-40 placeholder-slate-600"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* USERNAME SHOW/HIDE TOGGLE ("mene kaha ki username hide ho post nahi") */}
+        <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
+          {/* USERNAME SHOW/HIDE TOGGLE */}
           <button
             onClick={() => setShowWatermark(!showWatermark)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold text-xs transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold text-xs transition cursor-pointer ${
               showWatermark
                 ? 'bg-slate-800 text-slate-200 hover:bg-slate-700'
                 : 'bg-rose-950/60 text-rose-300 border border-rose-800/80'
@@ -965,7 +965,7 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
             ) : (
               <>
                 <EyeOff className="w-3.5 h-3.5 text-rose-400" />
-                <span>Username Hidden (No Watermark)</span>
+                <span>Watermark: OFF</span>
               </>
             )}
           </button>
@@ -973,12 +973,12 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
           {/* Corner selector (only when watermark is on) */}
           {showWatermark && (
             <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-md p-0.5 text-[11px]">
-              <span className="text-slate-500 px-1.5 hidden sm:inline">Corner:</span>
+              <span className="text-slate-500 px-1 hidden md:inline">Corner:</span>
               {[
-                { id: 'bottom_right', label: 'Bottom-R' },
-                { id: 'bottom_left', label: 'Bottom-L' },
-                { id: 'top_right', label: 'Top-R' },
-                { id: 'top_left', label: 'Top-L' },
+                { id: 'bottom_right', label: 'B-R' },
+                { id: 'bottom_left', label: 'B-L' },
+                { id: 'top_right', label: 'T-R' },
+                { id: 'top_left', label: 'T-L' },
               ].map((c) => (
                 <button
                   key={c.id}
@@ -987,7 +987,7 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
                       onUpdateHandle(userHandle, c.id as any);
                     }
                   }}
-                  className={`px-2 py-0.5 rounded font-medium transition ${
+                  className={`px-1.5 py-0.5 rounded font-medium transition cursor-pointer text-[10px] sm:text-xs ${
                     handleCorner === c.id
                       ? 'bg-rose-600 text-white'
                       : 'text-slate-400 hover:text-white'
@@ -1002,9 +1002,9 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
       </div>
 
       {/* REELS POST SETTINGS PERSISTENCE & 1-CLICK STATUS BANNER */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:px-4 sm:py-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-1.5">
             <Film className="w-4 h-4 text-rose-500 shrink-0" />
             <span className="font-semibold text-white">Reels Studio Config:</span>
             <span className="text-slate-300 font-mono text-[11px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
@@ -1012,7 +1012,7 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
             </span>
           </div>
           <span className="text-slate-600 hidden sm:inline" aria-hidden="true">·</span>
-          <span className="text-slate-400 font-normal">
+          <span className="text-slate-400 font-normal text-[11px] sm:text-xs">
             1-Click 9:16 Video Downloads Active
           </span>
         </div>
@@ -1026,7 +1026,7 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
                 imageSuggestion: firstCfg.bgImageUrl,
               });
             }}
-            className="text-xs text-rose-400 hover:text-rose-300 font-medium flex items-center gap-1.5 transition-colors px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80"
+            className="text-xs text-rose-400 hover:text-rose-300 font-medium flex items-center justify-center gap-1.5 transition-colors px-2.5 py-1.5 rounded-md bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 cursor-pointer"
           >
             <span>Configure Audio &amp; Video Backgrounds</span>
             <span aria-hidden="true">→</span>
@@ -1034,8 +1034,8 @@ Tags: #BreakingNews #TopStories #WorldNews #${(item.category || 'News').replace(
         )}
       </div>
 
-      {/* 4-COLUMN GOOGLE-VERIFIED BROADCAST POSTERS GRID (list 2 ki he 4 ki kar do) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {/* 4-COLUMN GOOGLE-VERIFIED BROADCAST POSTERS GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
         {items.map((item, index) => {
           const cfg = getPosterConfigForItem(item);
           const isSaved = savedIds.includes(item.id);

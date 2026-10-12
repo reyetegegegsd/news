@@ -31,7 +31,7 @@ import {
 import { NEWS_BACKGROUNDS } from './data/backgrounds';
 import { COUNTRIES } from './data/countries';
 import { FALLBACK_TRENDING_NEWS } from './data/fallbackNews';
-import { generateClientStory, generateClient50Styles } from './utils/clientNewsGenerator';
+import { generateClientStory, generateClient50Styles, generateClientVerifiedNews } from './utils/clientNewsGenerator';
 import { exportReelVideo, downloadReelBlob } from './utils/reelVideoExporter';
 import {
   Sparkles,
@@ -267,8 +267,16 @@ export default function App() {
         }
       }
 
-      if (loadedNews.length === 0 && feedItems.length === 0) {
-        loadedNews = FALLBACK_TRENDING_NEWS;
+      if (loadedNews.length === 0) {
+        const countryObj = COUNTRIES.find((c) => c.code === country);
+        const clientRes = generateClientVerifiedNews(
+          agentConfig.voiceLanguage || 'Hindi',
+          countryObj?.name || country,
+          '',
+          timeFilter,
+          20
+        );
+        loadedNews = clientRes.news;
       }
 
       if (loadedNews.length > 0) {
@@ -334,6 +342,7 @@ export default function App() {
     const countryObj = COUNTRIES.find((c) => c.code === countryCode);
     const name = countryObj ? countryObj.name : countryCode;
     showToast(`Loading live news & posters for ${name}...`);
+    fetchNewsFeed(countryCode, activeTimeFilter);
   };
 
   // Time Filter Change Handler

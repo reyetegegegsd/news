@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TrendingNewsItem } from '../types';
 import { COUNTRIES } from '../data/countries';
 import { FALLBACK_TRENDING_NEWS } from '../data/fallbackNews';
-import { generateClient50Styles } from '../utils/clientNewsGenerator';
+import { generateClient50Styles, generateClientVerifiedNews } from '../utils/clientNewsGenerator';
 import {
   RefreshCw,
   Search,
@@ -94,7 +94,9 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
           const generated = generateClient50Styles(q, `Live dispatch for ${q}`);
           onNewsFeedLoaded(generated.slice(0, 16));
         } else {
-          onNewsFeedLoaded(FALLBACK_TRENDING_NEWS);
+          const cName = COUNTRIES.find((c) => c.code === country)?.name || country;
+          const generated = generateClientVerifiedNews('Hindi', cName, '', timeFilter, 20);
+          onNewsFeedLoaded(generated.news);
         }
       }
     } catch (e) {
@@ -104,7 +106,9 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
           const generated = generateClient50Styles(q, `Live dispatch for ${q}`);
           onNewsFeedLoaded(generated.slice(0, 16));
         } else {
-          onNewsFeedLoaded(FALLBACK_TRENDING_NEWS);
+          const cName = COUNTRIES.find((c) => c.code === country)?.name || country;
+          const generated = generateClientVerifiedNews('Hindi', cName, '', timeFilter, 20);
+          onNewsFeedLoaded(generated.news);
         }
       }
     } finally {
@@ -180,19 +184,19 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
       {/* Search Input Bar - Search Google News Wire */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         <form onSubmit={handleCustomSearch} className="relative flex-1 flex items-center">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
           <input
             type="text"
             value={customSearchQuery}
             onChange={(e) => setCustomSearchQuery(e.target.value)}
-            placeholder="Search any topic, entity, or breaking wire (e.g. Technology, Market Rally, SpaceX)..."
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-28 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-rose-500 transition-colors font-normal"
+            placeholder="Search news topic (IPL, Business, Weather, Tech, Crime)..."
+            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-24 sm:pr-28 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-rose-500 transition-colors font-normal"
           />
           {customSearchQuery && (
             <button
               type="button"
               onClick={() => setCustomSearchQuery('')}
-              className="absolute right-28 mr-2 text-slate-500 hover:text-slate-300 p-0.5"
+              className="absolute right-24 sm:right-28 mr-1 text-slate-500 hover:text-slate-300 p-0.5"
               title="Clear text"
             >
               <X className="w-3.5 h-3.5" />
@@ -201,15 +205,15 @@ export const TrendingNewsSelector: React.FC<TrendingNewsSelectorProps> = ({
           <button
             type="submit"
             disabled={isLoading || !customSearchQuery.trim()}
-            className="absolute right-1 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:opacity-40 text-white text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="absolute right-1 px-2.5 sm:px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:opacity-40 text-white text-xs font-medium rounded-md transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
           >
             {isLoading ? (
               <>
                 <RefreshCw className="w-3 h-3 animate-spin text-white" />
-                <span>Searching...</span>
+                <span className="hidden sm:inline">Searching...</span>
               </>
             ) : (
-              <span>Search Wire</span>
+              <span>Search</span>
             )}
           </button>
         </form>

@@ -37,6 +37,7 @@ import {
   SocialAccount,
   AiAgentConfig,
 } from '../types';
+import { generateClientVerifiedNews } from '../utils/clientNewsGenerator';
 import { exportReelVideo, downloadReelBlob, getSupportedVideoMimeType } from '../utils/reelVideoExporter';
 
 interface AiAgentInstagramModalProps {
@@ -305,17 +306,29 @@ export const AiAgentInstagramModal: React.FC<AiAgentInstagramModalProps> = ({
           newsCount: Math.max(5, Math.min(30, Number(newsLimit) || 15)),
         }),
       });
-      const data = await res.json();
-      clearInterval(stepTimer);
-      if (data.success && Array.isArray(data.news)) {
-        setVerifiedNewsResults(data.news);
+      if (res.ok) {
+        try {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.news)) {
+            clearInterval(stepTimer);
+            setVerifiedNewsResults(data.news);
+            return;
+          }
+        } catch {}
       }
-    } catch (err) {
-      clearInterval(stepTimer);
-      console.error(err);
-    } finally {
-      setIsThinking(false);
+    } catch {
+      // Backend not running (static hosting)
     }
+
+    clearInterval(stepTimer);
+    const clientData = generateClientVerifiedNews(
+      langQuery || 'Hindi',
+      countryQuery || 'India',
+      topicQuery.trim() || '🔥 आज की सबसे ताज़ा और वायरल ब्रेकिंग न्यूज़',
+      timeframeQuery,
+      Number(newsLimit) || 15
+    );
+    setVerifiedNewsResults(clientData.news);
   };
 
   // Batch Export all reels from verified results

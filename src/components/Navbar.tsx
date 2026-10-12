@@ -48,77 +48,77 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-md sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
-        {/* Zone 1: Brand Wordmark (Single element, no descriptor tags attached) */}
-        <div className="flex items-center gap-2.5 shrink-0">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 min-h-14 py-1.5 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+        {/* Zone 1: Brand Wordmark */}
+        <div className="flex items-center gap-2 shrink-0">
           <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" aria-hidden="true" />
           <button
             onClick={() => onViewChange('feed')}
-            className="text-left font-bold tracking-tight text-white text-sm sm:text-base hover:text-slate-200 transition-colors"
+            className="text-left font-bold tracking-tight text-white text-sm sm:text-base hover:text-slate-200 transition-colors cursor-pointer"
           >
             ViralNews <span className="text-rose-500 font-semibold">Wire</span>
           </button>
         </div>
 
-        {/* Zone 2: Navigation Links / Segmented View Switcher */}
+        {/* Zone 2: Navigation Links / Segmented View Switcher (Auto-scrollable on mobile) */}
         <nav
-          className="flex items-center bg-slate-900/95 border border-slate-800/90 rounded-2xl p-1 text-xs shadow-lg shadow-black/40 gap-1 backdrop-blur-md"
+          className="flex items-center bg-slate-900/95 border border-slate-800/90 rounded-2xl p-0.5 sm:p-1 text-xs shadow-lg shadow-black/40 gap-0.5 sm:gap-1 backdrop-blur-md overflow-x-auto scrollbar-none order-3 md:order-2 w-full md:w-auto justify-center md:justify-start"
           aria-label="Main Navigation"
         >
           <button
             onClick={() => onViewChange('feed')}
-            className={`px-3 sm:px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 whitespace-nowrap text-xs ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs cursor-pointer ${
               activeView === 'feed'
                 ? 'bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-md ring-1 ring-slate-600'
                 : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
             }`}
           >
-            <Newspaper className="w-3.5 h-3.5 text-rose-400" />
+            <Newspaper className="w-3.5 h-3.5 text-rose-400 shrink-0" />
             <span>Live Wire</span>
           </button>
 
           <button
             onClick={() => onViewChange('reels')}
-            className={`px-3 sm:px-3.5 py-1.5 rounded-xl font-black transition-all flex items-center gap-1.5 whitespace-nowrap text-xs ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl font-black transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs cursor-pointer ${
               activeView === 'reels'
                 ? 'bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-md shadow-rose-950/60 ring-1 ring-rose-400'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Film className="w-3.5 h-3.5 text-white" />
+            <Film className="w-3.5 h-3.5 text-white shrink-0" />
             <span>Reels Studio</span>
           </button>
 
           <button
             onClick={() => onViewChange('studio')}
-            className={`px-3 sm:px-3.5 py-1.5 rounded-xl font-black transition-all flex items-center gap-1.5 whitespace-nowrap text-xs ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl font-black transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs cursor-pointer ${
               activeView === 'studio'
                 ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-950/60 ring-1 ring-indigo-400'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Palette className="w-3.5 h-3.5 text-white" />
+            <Palette className="w-3.5 h-3.5 text-white shrink-0" />
             <span>Poster Studio</span>
           </button>
 
           <button
             onClick={() => onViewChange('saved')}
-            className={`px-3 sm:px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 whitespace-nowrap text-xs ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs cursor-pointer ${
               activeView === 'saved'
                 ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-md shadow-amber-950/60 ring-1 ring-amber-400'
                 : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
             }`}
           >
-            <Bookmark className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Saved</span>
+            <Bookmark className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>Saved</span>
             <span className="font-mono tabular-nums text-[11px] px-1 rounded bg-black/40 text-amber-200">
               {savedCount}
             </span>
           </button>
         </nav>
 
-        {/* Zone 3: Actions (AI Verify, Country selector, Accounts, Dispatches counter) */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Zone 3: Actions (AI Agent, Country selector, Dispatches counter) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 order-2 md:order-3">
           {/* AI Agent Button ("ai button") */}
           {onOpenAiModal && (
             <button
