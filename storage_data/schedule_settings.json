@@ -1,0 +1,16 @@
+{
+  "isEnabled": true,
+  "postsPerDay": 3,
+  "daysCount": 2,
+  "timeSlots": [
+    "09:00",
+    "14:00",
+    "20:00"
+  ],
+  "language": "Hindi",
+  "country": "IN",
+  "speechRate": 1.2,
+  "theme": "red_dark",
+  "preRenderMinutesBefore": 30,
+  "isLoopActive": true
+}

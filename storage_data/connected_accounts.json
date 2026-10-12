@@ -1,0 +1,23 @@
+[
+  {
+    "id": "fb-1",
+    "platform": "facebook",
+    "name": "Global News Network Official",
+    "handle": "@globalnewsnetwork",
+    "avatar": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80",
+    "followers": 245000,
+    "isConnected": true,
+    "pageId": "10982347891234"
+  },
+  {
+    "id": "ig-1",
+    "platform": "instagram",
+    "name": "Viral News Wire Live",
+    "handle": "@allnews24hr",
+    "avatar": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=150&auto=format&fit=crop&q=80",
+    "followers": 189000,
+    "isConnected": false,
+    "pageId": "",
+    "accessToken": "EAAdnd7JpQq8BSnsnfoAXzVhZBYev6kIIpIKdbZBwtmGXWhtl6n6P3iGeIRTykEcYrZAg5sOZBnd7VO0ZBCiUo53jMxs2UjP5GZBFdon2sFKxUZBvMGYyvQFPMTwHh6d2akqheIB7Nqp4htGGvhflHoyq8VsoUP4UePyFsGeY5Wm646dTWriN6v6SZCAFNRDRZALC8Su1lVia4qNgvjN36IRZCgXDCbFjEyfQkjshuWb7fRLJmeDAA3ZB9vlVsi6AaN9ACxCTK1hHSbzNtd8HrZBHbuvf"
+  }
+]
