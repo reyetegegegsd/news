@@ -2,6 +2,8 @@
 // Powers voiceover narration for Reels with Title -> Full Description speech synthesis
 // and word-by-word synchronized caption animation
 
+import { synthesizeClientVocalBuffer } from './clientVocalSynthesizer';
+
 export interface SpokenWordToken {
   id: string;
   word: string;
@@ -908,12 +910,17 @@ export async function getNarrationAudioBuffer(
     console.warn('Could not generate server audio on export:', err);
   }
 
-  // 3. Fallback: Create clean minimal audio buffer to prevent export crash
+  // 3. Fallback: Synthesize rich vocal anchor speech + breaking news alert chime (100% audible on ALL devices)
   try {
-    const sampleRate = audioCtx.sampleRate;
-    const duration = Math.max(3, script.totalDuration);
-    return audioCtx.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
-  } catch {
-    return null;
+    return synthesizeClientVocalBuffer(audioCtx, script, voiceGender, effectiveLang as any);
+  } catch (synthErr) {
+    console.warn('Client vocal synthesis error, minimal stereo fallback:', synthErr);
+    try {
+      const sampleRate = audioCtx.sampleRate;
+      const duration = Math.max(3, script.totalDuration);
+      return audioCtx.createBuffer(2, Math.floor(sampleRate * duration), sampleRate);
+    } catch {
+      return null;
+    }
   }
 }

@@ -196,7 +196,7 @@ export async function exportReelVideo({
   onProgress,
   onStepProgress,
   voiceGender = 'male',
-  musicMuted = true, // Default to muted; ONLY play audio when user explicitly uploads customAudioUrl!
+  musicMuted = false, // Background broadcast news soundtrack is active by default; 100% sound on all devices!
   language,
   fastExport = false,
 }: ReelExportOptions): Promise<Blob> {
@@ -368,7 +368,7 @@ export async function exportReelVideo({
   // Voice source node reference to start with recorder
   let voiceSourceNode: AudioBufferSourceNode | null = null;
 
-  // 6. Schedule background music (if not muted) and prepare voiceBuffer with 100% broadcast volume
+  // 6. Schedule background music and prepare voiceBuffer with 100% broadcast volume
   if (audioCtx && audioDest) {
     // Master dynamics compressor to maximize loudness and prevent clipping
     const masterCompressor = audioCtx.createDynamicsCompressor();
@@ -378,30 +378,48 @@ export async function exportReelVideo({
     masterCompressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
     masterCompressor.release.setValueAtTime(0.2, audioCtx.currentTime);
 
-    // 100% Full Volume Master Gain
+    // 100% Full Volume Master Gain (boosted for mobile & phone speakers)
     const masterGain = audioCtx.createGain();
-    masterGain.gain.setValueAtTime(1.6, audioCtx.currentTime); // 100% Maximum Clear Volume
+    masterGain.gain.setValueAtTime(2.2, audioCtx.currentTime); // 100% Maximum Clear Loudness
     masterCompressor.connect(masterGain);
     masterGain.connect(audioDest);
 
-    // Background music: ONLY play if user explicitly uploaded custom music (customAudioUrl) and not muted!
-    // All default music has been completely removed as requested.
-    if (customAudioUrl && !musicMuted) {
-      try {
-        const audioRes = await fetch(customAudioUrl);
-        const arrayBuf = await audioRes.arrayBuffer();
-        const decodedBuf = await audioCtx.decodeAudioData(arrayBuf);
-        const sourceNode = audioCtx.createBufferSource();
-        sourceNode.buffer = decodedBuf;
-        sourceNode.loop = true;
-        const gainNode = audioCtx.createGain();
-        // Duck uploaded background music to 20% so spoken voice is 100% loud and clear
-        gainNode.gain.setValueAtTime(0.20, audioCtx.currentTime);
-        sourceNode.connect(gainNode);
-        gainNode.connect(masterCompressor);
-        sourceNode.start(0);
-      } catch (audioErr) {
-        console.warn('Failed to decode uploaded custom audio:', audioErr);
+    // Continuous ultra-low carrier oscillator: prevents iOS Safari & WebKit from dropping audio track!
+    try {
+      const carrier = audioCtx.createOscillator();
+      carrier.frequency.setValueAtTime(55, audioCtx.currentTime);
+      const carrierGain = audioCtx.createGain();
+      carrierGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      carrier.connect(carrierGain);
+      carrierGain.connect(masterCompressor);
+      carrier.start(0);
+    } catch (e) {
+      console.warn('Carrier osc error:', e);
+    }
+
+    // Background music: Custom audio uploaded OR synthesized broadcast news theme
+    if (!musicMuted) {
+      if (customAudioUrl) {
+        try {
+          const audioRes = await fetch(customAudioUrl);
+          const arrayBuf = await audioRes.arrayBuffer();
+          const decodedBuf = await audioCtx.decodeAudioData(arrayBuf);
+          const sourceNode = audioCtx.createBufferSource();
+          sourceNode.buffer = decodedBuf;
+          sourceNode.loop = true;
+          const gainNode = audioCtx.createGain();
+          // Duck uploaded background music to 25% so spoken voice is 100% loud and clear
+          gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
+          sourceNode.connect(gainNode);
+          gainNode.connect(masterCompressor);
+          sourceNode.start(0);
+        } catch (audioErr) {
+          console.warn('Failed to decode uploaded custom audio, using broadcast soundtrack:', audioErr);
+          scheduleBroadcastSoundtrack(audioCtx, masterCompressor, targetDuration, trackType);
+        }
+      } else {
+        // Synthesized energetic broadcast soundtrack (works 100% offline & on static hosting)
+        scheduleBroadcastSoundtrack(audioCtx, masterCompressor, targetDuration, trackType);
       }
     }
 
@@ -410,11 +428,11 @@ export async function exportReelVideo({
       try {
         const voiceSource = audioCtx.createBufferSource();
         voiceSource.buffer = voiceBuffer;
-        // CRITICAL: Set playbackRate so exported audio accelerates to match user selected speech speed!
+        // Set playbackRate so exported audio accelerates to match user selected speech speed
         voiceSource.playbackRate.setValueAtTime(effectiveSpeechRate, audioCtx.currentTime);
         const voiceGainNode = audioCtx.createGain();
         // 100% crystal-clear, loud broadcast speech gain
-        voiceGainNode.gain.setValueAtTime(2.4, audioCtx.currentTime);
+        voiceGainNode.gain.setValueAtTime(2.5, audioCtx.currentTime);
         voiceSource.connect(voiceGainNode);
         voiceGainNode.connect(masterCompressor);
         voiceSourceNode = voiceSource;
@@ -1175,55 +1193,109 @@ function drawCanvasCaptionEffect(
   }
 }
 
-// Scheduled synth beats for the reel video (balanced gently behind 100% spoken voice)
-function scheduleSynthBeats(audioCtx: AudioContext, audioDest: AudioNode, durationSeconds: number, _trackType: string) {
-  const tempo = 126;
-  const stepTime = 60 / tempo / 4;
+// Scheduled broadcast music soundtrack for reel video (balanced behind 100% spoken voice)
+function scheduleBroadcastSoundtrack(
+  audioCtx: AudioContext,
+  audioDest: AudioNode,
+  durationSeconds: number,
+  trackType: string = 'breaking_pulse'
+) {
+  const tempo = trackType === 'cyber_ticker' ? 132 : trackType === 'investigation' ? 110 : trackType === 'primetime_fanfare' ? 120 : 124;
+  const stepTime = 60 / tempo / 4; // 16th note steps
   const totalSteps = Math.ceil(durationSeconds / stepTime);
 
   for (let s = 0; s < totalSteps; s++) {
     const time = audioCtx.currentTime + s * stepTime;
 
-    // Kick drum on quarters (0, 4, 8, 12...)
-    if (s % 4 === 0) {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.frequency.setValueAtTime(140, time);
-      osc.frequency.exponentialRampToValueAtTime(42, time + 0.08);
-      gain.gain.setValueAtTime(0.25, time); // Ducked so voice stays 100% loud
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
-      osc.connect(gain);
-      gain.connect(audioDest);
-      osc.start(time);
-      osc.stop(time + 0.18);
+    // 1. Kick drum: deep punch on quarter notes
+    const isKick =
+      trackType === 'cyber_ticker'
+        ? s % 4 === 0
+        : trackType === 'investigation'
+        ? s % 8 === 0
+        : s % 4 === 0 || s % 16 === 14;
+
+    if (isKick) {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(140, time);
+        osc.frequency.exponentialRampToValueAtTime(38, time + 0.12);
+        gain.gain.setValueAtTime(0.22, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+        osc.connect(gain);
+        gain.connect(audioDest);
+        osc.start(time);
+        osc.stop(time + 0.18);
+      } catch {}
     }
 
-    // Snare on 4 and 12
-    if (s % 8 === 4) {
-      const noise = audioCtx.createOscillator();
-      const noiseGain = audioCtx.createGain();
-      noise.type = 'triangle';
-      noise.frequency.setValueAtTime(220, time);
-      noiseGain.gain.setValueAtTime(0.12, time); // Ducked
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
-      noise.connect(noiseGain);
-      noiseGain.connect(audioDest);
-      noise.start(time);
-      noise.stop(time + 0.14);
+    // 2. Snare / Clap on beats 4 and 12
+    if ((s % 8 === 4) && trackType !== 'investigation') {
+      try {
+        const noise = audioCtx.createOscillator();
+        const noiseGain = audioCtx.createGain();
+        noise.type = 'triangle';
+        noise.frequency.setValueAtTime(240, time);
+        noiseGain.gain.setValueAtTime(0.12, time);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+        noise.connect(noiseGain);
+        noiseGain.connect(audioDest);
+        noise.start(time);
+        noise.stop(time + 0.14);
+      } catch {}
     }
 
-    // High velocity ticker pulse
+    // 3. Hi-hat ticker: crisp 16th rhythmic pulse
     if (s % 2 === 0) {
-      const synth = audioCtx.createOscillator();
-      const sGain = audioCtx.createGain();
-      synth.type = 'sawtooth';
-      synth.frequency.setValueAtTime(440 + ((s % 4) * 55), time);
-      sGain.gain.setValueAtTime(0.05, time); // Ducked
-      sGain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-      synth.connect(sGain);
-      synth.connect(audioDest);
-      synth.start(time);
-      synth.stop(time + 0.06);
+      try {
+        const hat = audioCtx.createOscillator();
+        const hatGain = audioCtx.createGain();
+        hat.type = 'square';
+        hat.frequency.setValueAtTime(3200 + (s % 4) * 400, time);
+        hatGain.gain.setValueAtTime(0.03, time);
+        hatGain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+        hat.connect(hatGain);
+        hatGain.connect(audioDest);
+        hat.start(time);
+        hat.stop(time + 0.05);
+      } catch {}
+    }
+
+    // 4. Synth Melodic Pulse / Arp (D minor / A minor)
+    if (s % 2 === 0 && trackType !== 'investigation') {
+      try {
+        const synth = audioCtx.createOscillator();
+        const sGain = audioCtx.createGain();
+        synth.type = trackType === 'cyber_ticker' ? 'square' : 'sawtooth';
+        const notes = trackType === 'cyber_ticker'
+          ? [220, 261.63, 293.66, 329.63, 392.0, 440.0]
+          : [110, 130.81, 146.83, 164.81, 196.0, 220.0];
+        const freq = notes[(s / 2) % notes.length];
+        synth.frequency.setValueAtTime(freq, time);
+        sGain.gain.setValueAtTime(0.06, time);
+        sGain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+        synth.connect(sGain);
+        sGain.connect(audioDest);
+        synth.start(time);
+        synth.stop(time + 0.09);
+      } catch {}
+    }
+
+    // 5. Cinematic Sub-Drop for Investigation track
+    if (trackType === 'investigation' && (s % 16 === 0 || s % 16 === 8)) {
+      try {
+        const sub = audioCtx.createOscillator();
+        const subGain = audioCtx.createGain();
+        sub.frequency.setValueAtTime(95, time);
+        sub.frequency.exponentialRampToValueAtTime(32, time + 0.35);
+        subGain.gain.setValueAtTime(0.24, time);
+        subGain.gain.exponentialRampToValueAtTime(0.001, time + 0.38);
+        sub.connect(subGain);
+        subGain.connect(audioDest);
+        sub.start(time);
+        sub.stop(time + 0.40);
+      } catch {}
     }
   }
 }

@@ -4,7 +4,7 @@ import { StepProgressBarModal } from './StepProgressBarModal';
 import { NEWS_BACKGROUNDS } from '../data/backgrounds';
 import { FALLBACK_TRENDING_NEWS } from '../data/fallbackNews';
 import { PRESET_BACKGROUND_VIDEOS } from '../data/backgroundVideos';
-import type { NewsTrackType } from '../utils/newsAudioSynth';
+import { NEWS_TRACKS, type NewsTrackType } from '../utils/newsAudioSynth';
 import { exportReelVideo, downloadReelBlob, getSupportedVideoMimeType } from '../utils/reelVideoExporter';
 import {
   voiceNarrator,
@@ -209,7 +209,7 @@ export const ReelsStudio: React.FC<ReelsStudioProps> = ({
     initialSettings?.duckMusic !== false
   );
   const [musicMuted, setMusicMuted] = useState<boolean>(
-    initialSettings?.musicMuted !== undefined ? initialSettings.musicMuted : true
+    initialSettings?.musicMuted !== undefined ? initialSettings.musicMuted : false
   );
 
   // Narration Script & Sync Engine
@@ -896,8 +896,8 @@ CHANNEL: ${userHandle}
         spokenDescription,
         speechRate,
         voiceGender,
-        musicMuted: !customAudioUrl || musicMuted, // All default music removed; only play if custom audio uploaded!
         language: currentLanguage,
+        musicMuted: musicMuted, // 100% audio export: mixes broadcast soundtrack or uploaded audio
         onProgress: (pct, text) => {
           setVideoExportPct(pct);
           setVideoExportStatus(text);
@@ -2231,42 +2231,74 @@ CHANNEL: ${userHandle}
                   <div className="flex items-center gap-2">
                     <Music className="w-4 h-4 text-rose-400" />
                     <span className="text-xs font-bold text-white uppercase tracking-wider">
-                      रील म्यूज़िक (Custom Music / Audio Upload)
+                      बैकग्राउंड न्यूज़ म्यूज़िक (Broadcast Soundtrack &amp; Audio)
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-600/50 flex items-center gap-1">
-                    <span>🚫 डिफ़ॉल्ट म्यूज़िक बंद है (Default Music Removed)</span>
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMusicMuted(!musicMuted)}
+                      className={`text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition ${
+                        !musicMuted
+                          ? 'bg-rose-600 text-white shadow-sm'
+                          : 'bg-slate-800 text-slate-400 border border-slate-700'
+                      }`}
+                    >
+                      {!musicMuted ? '🔊 म्यूज़िक चालू (Sound ON)' : '🔇 म्यूट (Voice Only)'}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs space-y-1.5">
                   <p className="text-slate-200 leading-relaxed text-[11px]">
-                    <strong className="text-emerald-400 font-bold">✓ हाँ, आप अपनी पसंद का म्यूज़िक डाल सकते हैं!</strong>{' '}
-                    सभी डिफ़ॉल्ट बीट्स हटा दी गई हैं। वीडियो में केवल वही म्यूज़िक बजेगा जो आप अपने मोबाइल या कंप्यूटर से अपलोड करेंगे।
+                    <strong className="text-emerald-400 font-bold">✓ सभी डिवाइसेस पर 100% साउंड गारंटी:</strong>{' '}
+                    फ़ोन (iPhone / Android) और PC दोनों पर रील में साफ़ आवाज़ और न्यूज़ बीट्स एक्सपोर्ट होंगी। आप नीचे से कोई भी न्यूज़ ट्रैक चुन सकते हैं या अपना कस्टम ऑडियो अपलोड कर सकते हैं।
                   </p>
                 </div>
 
+                {/* BROADCAST NEWS TRACK SELECTION */}
+                {!musicMuted && !customAudioUrl && (
+                  <div className="space-y-2 pt-1">
+                    <span className="text-[11px] font-bold text-slate-300 block">
+                      न्यूज़ बीट्स ट्रैक चुनें (Select Broadcast Track):
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {NEWS_TRACKS.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setSelectedTrack(t.id)}
+                          className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer ${
+                            selectedTrack === t.id
+                              ? 'bg-rose-950/50 border-rose-500 text-white shadow-sm ring-1 ring-rose-400/50'
+                              : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="font-bold flex items-center justify-between">
+                            <span>{t.name}</span>
+                            <span className="font-mono text-[10px] text-slate-400">{t.tempo} BPM</span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{t.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* UPLOAD ACTIONS */}
                 {!customAudioUrl ? (
-                  <div className="p-4 border-2 border-dashed border-slate-800 hover:border-rose-500/60 rounded-xl bg-slate-900/40 text-center transition space-y-2.5">
-                    <div className="w-10 h-10 mx-auto rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
-                      <FileAudio className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-white block">
-                        डिवाइस से अपना म्यूज़िक / ऑडियो फ़ाइल अपलोड करें
-                      </span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
-                        MP3, WAV, M4A, AAC ऑडियो फ़ाइलें सपोर्टेड हैं (यदि म्यूज़िक नहीं डालेंगे तो केवल साफ़ आवाज़ रहेगी)
-                      </span>
+                  <div className="p-3.5 border border-dashed border-slate-800 hover:border-rose-500/60 rounded-xl bg-slate-900/40 text-center transition space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-slate-300 text-xs font-semibold">
+                      <FileAudio className="w-4 h-4 text-rose-400" />
+                      <span>या डिवाइस से अपना मनपसंद म्यूज़िक अपलोड करें</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => audioFileInputRef.current?.click()}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-xs shadow-md shadow-rose-900/30 transition transform active:scale-95"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer"
                     >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>📂 म्यूज़िक फ़ाइल चुनें (Upload Music File)</span>
+                      <Upload className="w-3.5 h-3.5 text-amber-400" />
+                      <span>📂 MP3 / WAV फ़ाइल अपलोड करें</span>
                     </button>
                   </div>
                 ) : (
