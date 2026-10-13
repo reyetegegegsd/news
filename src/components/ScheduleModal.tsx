@@ -120,16 +120,17 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
           return;
         }
       }
-    } catch {}
 
-    // Fallback to localStorage for static hosting
-    try {
-      const localPosts = localStorage.getItem('viralnews_schedule_posts');
-      if (localPosts) setPosts(JSON.parse(localPosts));
-      const localSettings = localStorage.getItem('viralnews_schedule_settings');
-      if (localSettings) setSettings(JSON.parse(localSettings));
-    } catch {}
-    setIsLoading(false);
+      // Fallback to localStorage for static hosting
+      try {
+        const localPosts = localStorage.getItem('viralnews_schedule_posts');
+        if (localPosts) setPosts(JSON.parse(localPosts));
+        const localSettings = localStorage.getItem('viralnews_schedule_settings');
+        if (localSettings) setSettings(JSON.parse(localSettings));
+      } catch {}
+    } catch {} finally {
+      setIsLoading(false);
+    }
   };
 
   // Update schedule settings
@@ -205,22 +206,29 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
         // Slot schedule times (e.g. 09:00, 13:00, 17:00, 21:00)
         const times = ['09:00', '13:00', '17:00', '21:00', '23:30'];
         const targetTime = times[slotIdx % times.length];
+        const scheduledTime = new Date(`${dateStr}T${targetTime}:00`).toISOString();
+        const hashtags = ['#BreakingNews', '#Trending', '#Reels', `#${(item.category || 'News').replace(/\s+/g, '')}`];
+        const bgImg = item.autoPoster?.bgImageUrl || item.imageSuggestion || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1080&auto=format&fit=crop&q=85';
 
         return {
           id: `slot-${Date.now()}-${idx}`,
-          targetDate: dateStr,
-          targetTime,
-          status: 'scheduled',
+          newsId: item.id,
           headline: item.headline,
           summary: item.summary,
           topic: item.headline,
-          theme: (settings.theme as any) || 'red_dark',
-          badge: item.badge,
-          coverImageUrl: item.autoPoster?.bgImageUrl || item.imageSuggestion || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1080&auto=format&fit=crop&q=85',
+          category: item.category || 'News',
+          country: settings.country || currentCountry || 'IN',
           language: settings.language || 'Hindi',
-          preRenderMinutesBefore: settings.preRenderMinutesBefore || 30,
-          publishedPlatforms: [],
-          fullStory: item.fullDescription || item.summary,
+          speechRate: settings.speechRate || 1.2,
+          theme: (settings.theme as any) || 'red_dark',
+          bgImageUrl: bgImg,
+          coverImageUrl: bgImg,
+          caption: `${item.headline}\n\n${item.summary}\n\n${hashtags.join(' ')}`,
+          hashtags,
+          scheduledTime,
+          dayLabel: `Day ${dayOffset + 1}`,
+          timeSlot: targetTime,
+          status: 'pending' as const,
         };
       });
 

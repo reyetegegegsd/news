@@ -347,9 +347,13 @@ export const ReelsStudio: React.FC<ReelsStudioProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
-      if (data?.success && data?.reels) {
-        setSavedDrafts(data.reels);
+      if (res.ok) {
+        try {
+          const data = await res.json();
+          if (data?.success && data?.reels) {
+            setSavedDrafts(data.reels);
+          }
+        } catch {}
       }
     } catch (e) {
       console.warn('Auto-save server sync warning:', e);
@@ -440,9 +444,13 @@ export const ReelsStudio: React.FC<ReelsStudioProps> = ({
   const fetchSavedDrafts = async () => {
     try {
       const res = await fetch('/api/reels/saved');
-      const data = await res.json();
-      if (data.reels) {
-        setSavedDrafts(data.reels);
+      if (res.ok) {
+        try {
+          const data = await res.json();
+          if (data.reels) {
+            setSavedDrafts(data.reels);
+          }
+        } catch {}
       }
     } catch (e) {
       console.warn('Failed to load saved reels drafts from server:', e);
@@ -457,11 +465,15 @@ export const ReelsStudio: React.FC<ReelsStudioProps> = ({
     e.stopPropagation();
     try {
       const res = await fetch(`/api/reels/saved/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.reels) {
-        setSavedDrafts(data.reels);
-        setManualSaveFeedback('ड्राफ्ट हटा दिया गया। Draft deleted.');
-        setTimeout(() => setManualSaveFeedback(null), 2500);
+      if (res.ok) {
+        try {
+          const data = await res.json();
+          if (data.reels) {
+            setSavedDrafts(data.reels);
+            setManualSaveFeedback('ड्राफ्ट हटा दिया गया। Draft deleted.');
+            setTimeout(() => setManualSaveFeedback(null), 2500);
+          }
+        } catch {}
       }
     } catch (e) {
       console.warn('Failed to delete draft:', e);

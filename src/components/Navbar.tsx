@@ -27,8 +27,8 @@ interface NavbarProps {
   onOpenScheduleModal?: () => void;
   publishedCount: number;
   savedCount: number;
-  activeView: 'feed' | 'saved' | 'reels' | 'studio';
-  onViewChange: (view: 'feed' | 'saved' | 'reels' | 'studio') => void;
+  activeView: 'feed' | 'saved' | 'reels' | 'studio' | 'autopilot';
+  onViewChange: (view: 'feed' | 'saved' | 'reels' | 'studio' | 'autopilot') => void;
   agentEnabled?: boolean;
   nextRunCountdown?: number;
 }
@@ -212,6 +212,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Palette className="w-3.5 h-3.5 text-white shrink-0" />
               <span>Poster Studio</span>
+            </button>
+
+            <button
+              onClick={() => onViewChange('autopilot')}
+              className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap text-xs cursor-pointer ${
+                activeView === 'autopilot'
+                  ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white shadow-md shadow-purple-950/60 ring-1 ring-purple-400'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+              <span>AI Auto-Pilot</span>
             </button>
 
             <button

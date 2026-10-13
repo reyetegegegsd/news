@@ -540,8 +540,9 @@ class VoiceNarrationController {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: cleanTitle, description: cleanDesc, voiceGender, language: targetLang }),
       });
-      const data = await res.json();
-      if (data?.success && data?.audioBase64) {
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.success && data?.audioBase64) {
         const binary = atob(data.audioBase64);
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) {
@@ -564,6 +565,7 @@ class VoiceNarrationController {
         const blob = new Blob([bytes], { type: data.mimeType || 'audio/mpeg' });
         this.serverAudioUrl = URL.createObjectURL(blob);
         return this.serverAudioUrl;
+      }
       }
     } catch (e) {
       console.warn('Could not fetch broadcast speech audio:', e);
@@ -876,27 +878,31 @@ export async function getNarrationAudioBuffer(
         language: effectiveLang,
       }),
     });
-    const data = await res.json();
-    if (data?.success && data?.audioBase64) {
-      const binary = atob(data.audioBase64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-      const timing = data.totalDuration ? {
-        totalDuration: data.totalDuration,
-        titleDuration: data.titleDuration || 0,
-        pauseDuration: data.pauseDuration || 0.35,
-        descDuration: data.descDuration || 0,
-        words: data.words,
-        phrases: data.phrases,
-      } : undefined;
-      voiceNarrator.storeBufferDirectly(
-        bytes.buffer,
-        `${script.title}:::${script.description}:::${voiceGender}:::${effectiveLang}`,
-        timing
-      );
-      return await audioCtx.decodeAudioData(bytes.buffer.slice(0));
+    if (res.ok) {
+      try {
+        const data = await res.json();
+        if (data?.success && data?.audioBase64) {
+          const binary = atob(data.audioBase64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          const timing = data.totalDuration ? {
+            totalDuration: data.totalDuration,
+            titleDuration: data.titleDuration || 0,
+            pauseDuration: data.pauseDuration || 0.35,
+            descDuration: data.descDuration || 0,
+            words: data.words,
+            phrases: data.phrases,
+          } : undefined;
+          voiceNarrator.storeBufferDirectly(
+            bytes.buffer,
+            `${script.title}:::${script.description}:::${voiceGender}:::${effectiveLang}`,
+            timing
+          );
+          return await audioCtx.decodeAudioData(bytes.buffer.slice(0));
+        }
+      } catch {}
     }
   } catch (err) {
     console.warn('Could not generate server audio on export:', err);

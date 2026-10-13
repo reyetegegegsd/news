@@ -312,6 +312,7 @@ export const AiAgentInstagramModal: React.FC<AiAgentInstagramModalProps> = ({
           if (data.success && Array.isArray(data.news)) {
             clearInterval(stepTimer);
             setVerifiedNewsResults(data.news);
+            setIsThinking(false);
             return;
           }
         } catch {}
@@ -329,6 +330,7 @@ export const AiAgentInstagramModal: React.FC<AiAgentInstagramModalProps> = ({
       Number(newsLimit) || 15
     );
     setVerifiedNewsResults(clientData.news);
+    setIsThinking(false);
   };
 
   // Batch Export all reels from verified results
